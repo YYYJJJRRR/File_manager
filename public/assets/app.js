@@ -66,8 +66,9 @@
     DOM.dupBtn.addEventListener('click', findDuplicates);
     DOM.deleteDupBtn.addEventListener('click', deleteDuplicates);
     DOM.selectAllDup.addEventListener('change', function () {
-        document.querySelectorAll('.dup-checkbox').forEach(function (cb) { cb.checked = this.checked; });
-    }.bind(DOM.selectAllDup));
+        var checked = DOM.selectAllDup.checked;
+        document.querySelectorAll('.dup-checkbox').forEach(function (cb) { cb.checked = checked; });
+    });
     DOM.executeBtn.addEventListener('click', execute);
     DOM.refreshLogsBtn.addEventListener('click', loadLogs);
     DOM.selectAll.addEventListener('change', function () {
@@ -388,7 +389,12 @@
             categorize: document.getElementById('ruleCategorize').checked,
             time_archive: document.getElementById('ruleTimeArchive').checked,
         };
-        var findVal = document.getElementById('ruleFind').value.trim();
+        var findVal = DOM.ruleFind.value.trim();
+        if (findVal) {
+            rules.find_replace = [{ find: findVal, replace: DOM.ruleReplace.value.trim() }];
+        }
+        return rules;
+    }
 
     function renderTemplates(templates) {
         var sel = DOM.templateSelect;
