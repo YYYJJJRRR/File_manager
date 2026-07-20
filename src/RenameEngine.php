@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/Categorizer.php';
+
 class RenameEngine
 {
     public function preview(string $path, array $files, array $rules): array
@@ -15,11 +17,34 @@ class RenameEngine
             $newName = $this->applyRules($name, $ext, $rules, $index);
             $to = $newName . '.' . $ext;
 
+            $typeDir = '';
+            if (!empty($rules['categorize'])) {
+                $type = Categorizer::getType($ext);
+                if ($type !== null) {
+                    $typeDir = $type . '/';
+                }
+            }
+
+            $timeDir = '';
+            if (!empty($rules['time_archive'])) {
+                $mtime = is_array($file) ? ($file['mtime'] ?? null) : null;
+                if ($mtime === null) {
+                    $fullPath = $path . DIRECTORY_SEPARATOR . $fileName;
+                    $mtime = file_exists($fullPath) ? filemtime($fullPath) : time();
+                }
+                $timeDir = date('Y/m/', $mtime);
+            }
+
+            $dirPrefix = $timeDir . $typeDir;
+            $toPath = $dirPrefix . $to;
+
             $mappings[] = [
                 'from'     => $fileName,
-                'to'       => $to,
-                'conflict' => $fileName !== $to && file_exists($path . DIRECTORY_SEPARATOR . $to),
-                'changed'  => $fileName !== $to,
+                'to'       => $toPath,
+                'typeDir'  => $typeDir,
+                'timeDir'  => $timeDir,
+                'conflict' => $fileName !== $toPath && file_exists($path . DIRECTORY_SEPARATOR . $toPath),
+                'changed'  => $fileName !== $toPath,
             ];
             $index++;
         }

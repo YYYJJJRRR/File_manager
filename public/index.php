@@ -12,7 +12,13 @@ $apiRoutes = [
     '/api/preview'  => true,
     '/api/execute'  => true,
     '/api/rollback' => true,
-    '/api/logs'     => true,
+        '/api/logs'      => true,
+        '/api/templates'  => true,
+        '/api/template/save'   => true,
+        '/api/template/delete' => true,
+        '/api/duplicates'       => true,
+        '/api/duplicates/clean' => true,
+        '/api/progress'         => true,
 ];
 
 if (isset($apiRoutes[$uri])) {

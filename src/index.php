@@ -65,6 +65,67 @@ switch ($uri) {
         echo json_encode($result);
         break;
 
+    case '/api/templates':
+        if (!requireIfExists(__DIR__ . '/TemplateManager.php')) {
+            echo json_encode(['error' => '功能未实现: TemplateManager.php']);
+            exit;
+        }
+        $templates = TemplateManager::all();
+        echo json_encode(['templates' => $templates]);
+        break;
+
+    case '/api/template/save':
+        if (!requireIfExists(__DIR__ . '/TemplateManager.php')) {
+            echo json_encode(['error' => '功能未实现: TemplateManager.php']);
+            exit;
+        }
+        $name = $body['name'] ?? '';
+        $rules = $body['rules'] ?? [];
+        if (!$name) {
+            echo json_encode(['error' => '模板名称不能为空']);
+            exit;
+        }
+        $result = TemplateManager::save($name, $rules);
+        echo json_encode($result);
+        break;
+
+    case '/api/template/delete':
+        if (!requireIfExists(__DIR__ . '/TemplateManager.php')) {
+            echo json_encode(['error' => '功能未实现: TemplateManager.php']);
+            exit;
+        }
+        $ok = TemplateManager::delete($body['name'] ?? '');
+        echo json_encode(['deleted' => $ok]);
+        break;
+
+    case '/api/duplicates':
+        if (!requireIfExists(__DIR__ . '/DuplicateFinder.php')) {
+            echo json_encode(['error' => '功能未实现: DuplicateFinder.php']);
+            exit;
+        }
+        $finder = new DuplicateFinder();
+        $result = $finder->find($body['path'] ?? '');
+        echo json_encode($result);
+        break;
+
+    case '/api/duplicates/clean':
+        if (!requireIfExists(__DIR__ . '/DuplicateFinder.php')) {
+            echo json_encode(['error' => '功能未实现: DuplicateFinder.php']);
+            exit;
+        }
+        $results = DuplicateFinder::clean($body['path'] ?? '', $body['files'] ?? []);
+        echo json_encode(['results' => $results]);
+        break;
+
+    case '/api/progress':
+        if (!requireIfExists(__DIR__ . '/Progress.php')) {
+            echo json_encode(['error' => '功能未实现: Progress.php']);
+            exit;
+        }
+        $progress = Progress::get();
+        echo json_encode(['progress' => $progress]);
+        break;
+
     default:
         http_response_code(404);
         echo json_encode(['error' => 'API Not Found']);

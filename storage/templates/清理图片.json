@@ -1,0 +1,10 @@
+{
+    "name": "清理图片",
+    "rules": {
+        "remove_spaces": true,
+        "lowercase": true,
+        "ext_lowercase": true,
+        "categorize": true
+    },
+    "created_at": "2026-07-20 09:46:41"
+}

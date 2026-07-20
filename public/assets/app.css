@@ -51,3 +51,26 @@ body {
 .status-dry-run {
     color: #17a2b8;
 }
+
+.log-row {
+    cursor: pointer;
+}
+
+.log-row:hover td {
+    background-color: #e8f4fd !important;
+}
+
+.dup-duplicate td {
+    background-color: #fff5f5 !important;
+}
+
+.dup-duplicate td:first-child {
+    border-left: 3px solid #dc3545;
+}
+
+.log-path {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
