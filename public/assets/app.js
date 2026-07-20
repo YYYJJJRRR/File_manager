@@ -39,6 +39,10 @@
         progressPanel: document.getElementById('progressPanel'),
         progressBar: document.getElementById('progressBar'),
         progressText: document.getElementById('progressText'),
+        statPath: document.getElementById('statPath'),
+        statFiles: document.getElementById('statFiles'),
+        statDupRow: document.getElementById('statDupRow'),
+        statDup: document.getElementById('statDup'),
     };
     let lastExts = '';
 
@@ -74,7 +78,14 @@
     loadLogs();
 
     function setStatus(msg, type) {
-        DOM.scanStatus.innerHTML = '<span class="text-' + (type || 'muted') + '">' + msg + '</span>';
+        var el = DOM.scanStatus;
+        el.style.display = 'block';
+        el.className = 'scan-status scan-status-' + (type || 'info');
+        el.textContent = msg;
+    }
+
+    function clearStatus() {
+        DOM.scanStatus.style.display = 'none';
     }
 
     function formatSize(bytes) {
@@ -129,6 +140,8 @@
             return;
         }
         currentPath = path;
+        DOM.statPath.textContent = path;
+        clearStatus();
         lastExts = DOM.extFilter.value.trim();
         var exts = lastExts ? lastExts.split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s; }) : [];
         setStatus('扫描中...', 'info');
@@ -145,6 +158,7 @@
                 return;
             }
             currentFiles = data.files || [];
+            DOM.statFiles.textContent = currentFiles.length;
             setStatus('共 ' + currentFiles.length + ' 个文件', 'success');
             renderFileList(currentFiles);
             DOM.welcomePanel.style.display = 'none';
@@ -474,6 +488,7 @@
             DOM.dupBody.innerHTML = '<tr><td colspan="4" class="text-center text-success py-3">✅ 未发现重复文件</td></tr>';
             DOM.dupSummary.textContent = '无重复';
             DOM.dupFooter.style.display = 'none';
+            DOM.statDupRow.style.display = 'none';
             return;
         }
         var dupCount = 0, wasted = 0;
@@ -497,6 +512,8 @@
         DOM.dupBody.innerHTML = html;
         DOM.dupSummary.textContent = dupCount + ' 个重复文件，可释放 ' + formatSize(wasted);
         DOM.dupFooter.style.display = dupCount > 0 ? 'flex' : 'none';
+        DOM.statDup.textContent = dupCount;
+        DOM.statDupRow.style.display = dupCount > 0 ? 'inline-flex' : 'none';
     }
 
     function deleteDuplicates() {
