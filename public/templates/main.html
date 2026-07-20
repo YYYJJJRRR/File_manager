@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件整理工作台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/app.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid py-4" id="app">
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="d-flex align-items-center gap-2">
+                    <span>🗂</span>
+                    <span>文件整理工作台</span>
+                    <span class="badge bg-secondary fs-6 ms-2">v0.1</span>
+                </h1>
+                <p class="text-muted">选择目录 → 配置规则 → 预览 → 执行</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card mb-3">
+                    <div class="card-header">目录选择</div>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="pathInput" placeholder="输入或粘贴路径">
+                            <button class="btn btn-outline-secondary" type="button" id="scanBtn">扫描</button>
+                        </div>
+                        <div id="scanStatus" class="mt-2"></div>
+                    </div>
+                </div>
+
+                <div class="card mb-3" id="rulePanel" style="display:none">
+                    <div class="card-header">重命名规则</div>
+                    <div class="card-body">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input rule-checkbox" type="checkbox" id="ruleRemoveSpaces">
+                            <label class="form-check-label" for="ruleRemoveSpaces">去空格</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input rule-checkbox" type="checkbox" id="ruleRemoveSpecial">
+                            <label class="form-check-label" for="ruleRemoveSpecial">去特殊字符</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input rule-checkbox" type="checkbox" id="ruleLowercase">
+                            <label class="form-check-label" for="ruleLowercase">统一小写</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input rule-checkbox" type="checkbox" id="ruleDatePrefix">
+                            <label class="form-check-label" for="ruleDatePrefix">加日期前缀</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input rule-checkbox" type="checkbox" id="ruleSequence">
+                            <label class="form-check-label" for="ruleSequence">序号填充</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input rule-checkbox" type="checkbox" id="ruleExtLowercase">
+                            <label class="form-check-label" for="ruleExtLowercase">扩展名小写</label>
+                        </div>
+                        <hr>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="dryRun" checked>
+                            <label class="form-check-label text-success" for="dryRun"><strong>Dry-run 模式</strong></label>
+                        </div>
+                        <button class="btn btn-primary w-100 mt-2" id="previewBtn" disabled>预览</button>
+                    </div>
+                </div>
+            </div>
+
+                <div class="card mb-3" id="logPanel">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>操作日志</span>
+                        <button class="btn btn-outline-secondary btn-sm" id="refreshLogsBtn">刷新</button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div style="max-height:300px;overflow-y:auto" id="logBody">
+                            <div class="text-center text-muted py-3">暂无操作记录</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div id="welcomePanel" class="card mb-3">
+                    <div class="card-body text-center py-5">
+                        <div style="font-size:48px">🗂</div>
+                        <h4 class="mt-3">选择目录开始整理文件</h4>
+                        <p class="text-muted">在左侧输入路径 → 点扫描 → 勾选文件 → 配置规则 → 预览 → 执行</p>
+                    </div>
+                </div>
+                <div class="card mb-3" id="filePanel" style="display:none">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>文件列表</span>
+                        <span class="text-muted small" id="fileCount"></span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive" style="max-height:400px;overflow-y:auto">
+                            <table class="table table-hover mb-0" id="fileTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width:40px"><input type="checkbox" id="selectAll"></th>
+                                        <th>名称</th>
+                                        <th style="width:100px">大小</th>
+                                        <th style="width:100px">扩展名</th>
+                                        <th style="width:160px">修改时间</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fileBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3" id="previewPanel" style="display:none">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>预览</span>
+                        <button class="btn btn-success btn-sm" id="executeBtn">执行</button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive" style="max-height:300px;overflow-y:auto">
+                            <table class="table table-hover mb-0" id="previewTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>原名</th>
+                                        <th style="width:40px"></th>
+                                        <th>新名</th>
+                                        <th style="width:80px">状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="previewBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted small text-end" id="previewSummary"></div>
+                </div>
+
+                <div class="card mb-3" id="resultPanel" style="display:none">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>执行结果</span>
+                        <span id="resultSummary"></span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive" style="max-height:300px;overflow-y:auto">
+                            <table class="table table-hover mb-0" id="resultTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>原名</th>
+                                        <th>新名</th>
+                                        <th style="width:100px">状态</th>
+                                        <th>说明</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="resultBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/app.js"></script>
+</body>
+</html>

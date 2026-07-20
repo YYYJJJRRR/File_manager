@@ -1,0 +1,53 @@
+body {
+    background: #f5f6fa;
+    font-size: 14px;
+}
+
+.card {
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.card-header {
+    background: #fff;
+    border-bottom: 1px solid #eee;
+    font-weight: 600;
+}
+
+.table th {
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+    z-index: 1;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+    font-size: 13px;
+}
+
+.conflict {
+    background: #fff3cd !important;
+}
+
+.conflict td {
+    color: #856404;
+}
+
+.status-ok {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.status-skipped {
+    color: #6c757d;
+}
+
+.status-error {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.status-dry-run {
+    color: #17a2b8;
+}
