@@ -1,6 +1,9 @@
 # 日志文件（运行时生成）
 storage/logs/*.json
 
+# 运行时进度文件
+storage/progress.json
+
 # 测试文件（本地测试数据，不提交）
 storage/test_files/
 
