@@ -21,7 +21,7 @@ class Scanner
 
             if ($fileinfo->isDir()) continue;
 
-            $first = mb_substr($name, 0, 1);
+            $first = $name[0] ?? '';
             if (in_array($first, $this->skipPrefixes, true)) continue;
 
             $ext = strtolower($fileinfo->getExtension());

@@ -65,7 +65,7 @@ class RenameEngine
         }
 
         if (!empty($rules['lowercase'])) {
-            $n = mb_strtolower($n);
+            $n = function_exists('mb_strtolower') ? mb_strtolower($n) : strtolower($n);
         }
 
         if (!empty($rules['ext_lowercase'])) {

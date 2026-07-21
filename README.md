@@ -32,7 +32,7 @@ start http://localhost:9090
 | 功能 | 说明 |
 |------|------|
 | 按类型归档 | 图片/文档/视频分到子目录 |
-| 重复文件检测 | 按 hash 找出重复，确认后删除/移动 |
+| 重复文件检测 | 按 hash 找出重复，确认后移入项目回收站；7 天内可恢复 |
 | 时间归档 | 按修改日期建 YYYY/MM 文件夹 |
 | 回滚 | 按操作日志把文件名改回去 |
 | 规则模板 | 保存/加载 JSON 配置 |
@@ -54,7 +54,7 @@ start http://localhost:9090
 
 | 层 | 选型 | 说明 |
 |----|------|------|
-| 运行 | PHP 8.x `php -S localhost:9090 -t public` | 内置服务器，零配置 |
+| 运行 | PHP 8.x `php -S localhost:9090 -t public` | 内置服务器，零配置；不要求 mbstring 扩展 |
 | 后端 | 原生 PHP，无框架 | 接口可控、依赖少 |
 | 前端 | HTML + CSS + 原生 JS | 或 + Bootstrap 5 |
 | 通信 | fetch JSON API | 三个接口即可 |
@@ -81,6 +81,7 @@ file-workbench/
 │   └── Log.php             # 操作日志读写 + 回滚
 ├── storage/
 │   └── logs/               # 操作日志 JSON
+│   └── trash/              # 重复文件回收站，条目保留 7 天
 ├── PLAN.md                 # 开发步骤
 └── README.md               # 本文件
 ```

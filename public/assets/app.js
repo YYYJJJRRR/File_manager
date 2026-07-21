@@ -37,6 +37,10 @@
         dupFooter: document.getElementById('dupFooter'),
         selectAllDup: document.getElementById('selectAllDup'),
         deleteDupBtn: document.getElementById('deleteDupBtn'),
+        trashBtn: document.getElementById('trashBtn'),
+        trashPanel: document.getElementById('trashPanel'),
+        trashBody: document.getElementById('trashBody'),
+        trashSummary: document.getElementById('trashSummary'),
         progressPanel: document.getElementById('progressPanel'),
         progressBar: document.getElementById('progressBar'),
         progressText: document.getElementById('progressText'),
@@ -79,6 +83,7 @@
     DOM.modalConfirm.addEventListener('click', doExecute);
     DOM.dupBtn.addEventListener('click', findDuplicates);
     DOM.deleteDupBtn.addEventListener('click', deleteDuplicates);
+    DOM.trashBtn.addEventListener('click', loadTrash);
     DOM.selectAllDup.addEventListener('change', function () {
         var checked = DOM.selectAllDup.checked;
         document.querySelectorAll('.dup-checkbox').forEach(function (cb) { cb.checked = checked; });
@@ -624,13 +629,15 @@
         DOM.statDupRow.style.display = dupCount > 0 ? 'inline-flex' : 'none';
     }
 
+    // Acceptance: duplicate action says “移入回收站”; moved items list in the trash panel;
+    // restore returns the file to its original path and refreshes the current directory.
     function deleteDuplicates() {
         var checked = [];
         document.querySelectorAll('.dup-checkbox:checked').forEach(function (cb) {
             checked.push(cb.value);
         });
-        if (checked.length === 0) { alert('请勾选要删除的重复文件'); return; }
-        if (!confirm('确认删除 ' + checked.length + ' 个重复文件？此操作不可回滚！')) return;
+        if (checked.length === 0) { alert('请勾选要移入回收站的重复文件'); return; }
+        if (!confirm('确认将 ' + checked.length + ' 个重复文件移入回收站？文件可在 7 天内恢复。')) return;
 
         fetch('/api/duplicates/clean', {
             method: 'POST',
@@ -639,9 +646,10 @@
         }).then(function (r) { return r.json(); }).then(function (data) {
             var ok = 0, fail = 0;
             (data.results || []).forEach(function (r) {
-                if (r.status === 'ok') ok++; else fail++;
+                if (r.status === 'trashed') ok++; else fail++;
             });
-            alert('删除完成：' + ok + ' 成功，' + fail + ' 失败');
+            alert('移入回收站完成：' + ok + ' 成功，' + fail + ' 失败');
+            loadTrash();
             if (fail === 0) {
                 findDuplicates();
                 if (currentPath) scanDirectory();
@@ -651,6 +659,48 @@
         }).catch(function (err) {
             alert('请求失败: ' + err.message);
         });
+    }
+
+    function loadTrash() {
+        DOM.trashPanel.style.display = 'block';
+        DOM.trashBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">加载中...</td></tr>';
+        fetch('/api/trash', { method: 'POST' }).then(function (r) { return r.json(); }).then(function (data) {
+            renderTrash(data.items || []);
+        }).catch(function (err) {
+            DOM.trashBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">请求失败: ' + escHtml(err.message) + '</td></tr>';
+        });
+    }
+
+    function renderTrash(items) {
+        if (items.length === 0) {
+            DOM.trashBody.innerHTML = '<tr><td colspan="4" class="text-center text-success py-3">回收站为空</td></tr>';
+            DOM.trashSummary.textContent = '无可恢复文件';
+            return;
+        }
+        DOM.trashSummary.textContent = items.length + ' 个文件，7 天后自动清理';
+        DOM.trashBody.innerHTML = items.map(function (item) {
+            return '<tr><td class="small">' + escHtml(item.originalName) + '</td>' +
+                '<td class="small">' + escHtml(item.originalPath) + '</td>' +
+                '<td class="small">' + escHtml(item.expiresAt) + '</td>' +
+                '<td><button class="btn btn-secondary btn-sm restore-trash-btn" data-id="' + escHtml(item.id) + '">恢复</button></td></tr>';
+        }).join('');
+        document.querySelectorAll('.restore-trash-btn').forEach(function (button) {
+            button.addEventListener('click', function () { restoreTrash(this.getAttribute('data-id')); });
+        });
+    }
+
+    function restoreTrash(id) {
+        if (!confirm('确认恢复该文件到原始路径？')) return;
+        fetch('/api/trash/restore', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id })
+        }).then(function (r) { return r.json(); }).then(function (data) {
+            if (data.status !== 'restored') { alert(data.message || '恢复失败'); return; }
+            loadTrash();
+            findDuplicates();
+            if (currentPath) scanDirectory();
+        }).catch(function (err) { alert('恢复失败: ' + err.message); });
     }
 
     function doRollback(logId) {

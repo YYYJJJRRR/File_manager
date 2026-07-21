@@ -18,6 +18,8 @@ $apiRoutes = [
         '/api/template/delete' => true,
         '/api/duplicates'       => true,
         '/api/duplicates/clean' => true,
+        '/api/trash'            => true,
+        '/api/trash/restore'    => true,
         '/api/progress'         => true,
 ];
 

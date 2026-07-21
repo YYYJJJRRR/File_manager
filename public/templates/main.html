@@ -46,6 +46,7 @@
         </div>
         <div class="panel-footer" style="padding:8px 16px">
             <button class="btn btn-warning-outline btn-sm btn-w-full" id="dupBtn">🔍 检测重复文件</button>
+            <button class="btn btn-secondary btn-sm btn-w-full" id="trashBtn" style="margin-top:6px">🗑 回收站</button>
         </div>
     </div>
 
@@ -219,7 +220,24 @@
             </div>
         </div>
         <div class="panel-footer" id="dupFooter" style="display:none;justify-content:flex-end">
-            <button class="btn btn-danger" id="deleteDupBtn">删除选中重复文件</button>
+            <button class="btn btn-danger" id="deleteDupBtn">移入回收站</button>
+        </div>
+    </div>
+
+    <div class="panel" id="trashPanel" style="display:none">
+        <div class="panel-header">
+            <span>🗑 回收站</span>
+            <span class="text-muted" id="trashSummary" style="font-size:12px;font-weight:400;text-transform:none"></span>
+        </div>
+        <div class="panel-body-flush">
+            <div class="table-wrap" style="max-height:300px">
+                <table>
+                    <thead>
+                        <tr><th>文件</th><th>原始路径</th><th style="width:180px">恢复截止</th><th style="width:90px">操作</th></tr>
+                    </thead>
+                    <tbody id="trashBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 

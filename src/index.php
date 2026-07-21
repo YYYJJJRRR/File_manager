@@ -117,6 +117,22 @@ switch ($uri) {
         echo json_encode(['results' => $results]);
         break;
 
+    case '/api/trash':
+        if (!requireIfExists(__DIR__ . '/TrashManager.php')) {
+            echo json_encode(['error' => '功能未实现: TrashManager.php']);
+            exit;
+        }
+        echo json_encode(['items' => (new TrashManager())->all()]);
+        break;
+
+    case '/api/trash/restore':
+        if (!requireIfExists(__DIR__ . '/TrashManager.php')) {
+            echo json_encode(['error' => '功能未实现: TrashManager.php']);
+            exit;
+        }
+        echo json_encode((new TrashManager())->restore($body['id'] ?? ''));
+        break;
+
     case '/api/progress':
         if (!requireIfExists(__DIR__ . '/Progress.php')) {
             echo json_encode(['error' => '功能未实现: Progress.php']);

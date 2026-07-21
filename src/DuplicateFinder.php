@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/Progress.php';
+require_once __DIR__ . '/TrashManager.php';
 
 class DuplicateFinder
 {
@@ -95,18 +96,36 @@ class DuplicateFinder
         return $files;
     }
 
-    public static function clean(string $path, array $files): array
+    public static function clean(string $path, array $files, ?TrashManager $trashManager = null): array
     {
+        $trashManager ??= new TrashManager();
         $results = [];
         foreach ($files as $f) {
+            if (!is_string($f) || $f === '' || strpbrk($f, '\\/') !== false || $f !== basename($f)) {
+                $results[] = ['file' => (string) $f, 'status' => 'error', 'message' => '文件名无效'];
+                continue;
+            }
             $fullPath = $path . DIRECTORY_SEPARATOR . $f;
             if (!file_exists($fullPath)) {
                 $results[] = ['file' => $f, 'status' => 'error', 'message' => '文件不存在'];
                 continue;
             }
             try {
-                unlink($fullPath);
-                $results[] = ['file' => $f, 'status' => 'ok', 'message' => ''];
+                $trashed = $trashManager->trash($fullPath);
+                if (($trashed['status'] ?? '') === 'trashed') {
+                    $results[] = [
+                        'file' => $f,
+                        'status' => 'trashed',
+                        'message' => '已移入回收站，可在 7 天内恢复',
+                        'id' => $trashed['id'],
+                    ];
+                } else {
+                    $results[] = [
+                        'file' => $f,
+                        'status' => 'error',
+                        'message' => $trashed['message'] ?? '无法移入回收站',
+                    ];
+                }
             } catch (\Throwable $e) {
                 $results[] = ['file' => $f, 'status' => 'error', 'message' => $e->getMessage()];
             }
