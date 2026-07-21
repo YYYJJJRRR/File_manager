@@ -396,6 +396,20 @@ tbody tr:hover td {
 /* ═══════════════════════════════════════════════════
    Status indicators
    ═══════════════════════════════════════════════════ */
+.sort-th {
+    cursor: pointer;
+    user-select: none;
+}
+.sort-th:hover { color: var(--primary); }
+.sort-arrow {
+    display: inline-block;
+    width: 16px;
+    font-size: 11px;
+    opacity: 0.3;
+}
+.sort-th.sort-asc .sort-arrow::after { content: '▲'; opacity: 1; color: var(--primary); }
+.sort-th.sort-desc .sort-arrow::after { content: '▼'; opacity: 1; color: var(--primary); }
+.sort-th:not(.sort-asc):not(.sort-desc) .sort-arrow::after { content: '⇅'; }
 .status-dot {
     display: inline-block;
     width: 8px;
@@ -534,8 +548,97 @@ tbody tr:hover td {
 /* ═══════════════════════════════════════════════════
    Reduced motion
    ═══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   Modal dialog
+   ═══════════════════════════════════════════════════ */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+}
+.modal-box {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    width: 480px;
+    max-width: 90vw;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 15px;
+}
+.modal-close {
+    cursor: pointer;
+    opacity: 0.4;
+    font-size: 18px;
+    padding: 0 4px;
+}
+.modal-close:hover { opacity: 0.8; }
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+.modal-summary {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.modal-stat {
+    flex: 1;
+    min-width: 80px;
+    text-align: center;
+    padding: 12px 8px;
+    background: var(--surface-hover);
+    border-radius: var(--radius-sm);
+}
+.modal-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    font-family: var(--font-display);
+    line-height: 1.2;
+}
+.modal-stat-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 4px;
+}
+.modal-stat.ok .modal-stat-value { color: var(--success); }
+.modal-stat.warn .modal-stat-value { color: var(--warning); }
+.modal-stat.danger .modal-stat-value { color: var(--danger); }
+.modal-detail {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+.modal-detail li { margin-bottom: 4px; }
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+}
+
 @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    .modal-overlay { backdrop-filter: none; }
 }
 
 /* ═══════════════════════════════════════════════════

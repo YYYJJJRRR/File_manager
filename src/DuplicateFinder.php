@@ -75,11 +75,10 @@ class DuplicateFinder
     private function collectFiles(string $path): array
     {
         $files = [];
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS)
-        );
+        $iterator = new DirectoryIterator($path);
 
         foreach ($iterator as $fileinfo) {
+            if ($fileinfo->isDot()) continue;
             if ($fileinfo->isDir()) continue;
             $name = $fileinfo->getFilename();
             if (in_array($name[0] ?? '', ['.', '_'], true)) continue;

@@ -26,6 +26,7 @@
         ruleReplace: document.getElementById('ruleReplace'),
         extFilter: document.getElementById('extFilter'),
         filterBtn: document.getElementById('filterBtn'),
+        searchFilter: document.getElementById('searchFilter'),
         templateSelect: document.getElementById('templateSelect'),
         saveTemplateBtn: document.getElementById('saveTemplateBtn'),
         deleteTemplateBtn: document.getElementById('deleteTemplateBtn'),
@@ -43,18 +44,28 @@
         statFiles: document.getElementById('statFiles'),
         statDupRow: document.getElementById('statDupRow'),
         statDup: document.getElementById('statDup'),
+        confirmModal: document.getElementById('confirmModal'),
+        modalSummary: document.getElementById('modalSummary'),
+        modalDetail: document.getElementById('modalDetail'),
+        modalConfirm: document.getElementById('modalConfirm'),
+        modalCancel: document.getElementById('modalCancel'),
+        modalClose: document.getElementById('modalClose'),
     };
     let lastExts = '';
 
     let currentFiles = [];
     let currentMappings = [];
     let currentPath = '';
+    let currentSort = { key: 'name', dir: 'asc' };
 
     loadTemplates();
 
     DOM.scanBtn.addEventListener('click', scanDirectory);
     DOM.filterBtn.addEventListener('click', function () {
         if (currentPath) scanDirectory();
+    });
+    DOM.searchFilter.addEventListener('input', function () {
+        if (currentFiles.length) renderFileList(currentFiles);
     });
     DOM.extFilter.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && currentPath) scanDirectory();
@@ -63,6 +74,9 @@
     DOM.saveTemplateBtn.addEventListener('click', saveTemplate);
     DOM.templateSelect.addEventListener('change', loadTemplate);
     DOM.deleteTemplateBtn.addEventListener('click', deleteTemplate);
+    DOM.modalCancel.addEventListener('click', hideModal);
+    DOM.modalClose.addEventListener('click', hideModal);
+    DOM.modalConfirm.addEventListener('click', doExecute);
     DOM.dupBtn.addEventListener('click', findDuplicates);
     DOM.deleteDupBtn.addEventListener('click', deleteDuplicates);
     DOM.selectAllDup.addEventListener('change', function () {
@@ -71,12 +85,25 @@
     });
     DOM.executeBtn.addEventListener('click', execute);
     DOM.refreshLogsBtn.addEventListener('click', loadLogs);
-    DOM.selectAll.addEventListener('change', function () {
-        document.querySelectorAll('.file-checkbox').forEach(cb => cb.checked = this.checked);
-        updatePreviewBtn();
-    });
+    DOM.selectAll.addEventListener('click', function (e) { e.stopPropagation(); });
 
     loadLogs();
+
+    document.querySelectorAll('.sort-th').forEach(function (th) {
+        th.addEventListener('click', function () {
+            var key = this.getAttribute('data-sort');
+            if (!key) return;
+            if (currentSort.key === key) {
+                currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.key = key;
+                currentSort.dir = 'asc';
+            }
+            document.querySelectorAll('.sort-th').forEach(function (h) { h.classList.remove('sort-asc', 'sort-desc'); });
+            this.classList.add('sort-' + currentSort.dir);
+            if (currentFiles.length) renderFileList(currentFiles);
+        });
+    });
 
     function setStatus(msg, type) {
         var el = DOM.scanStatus;
@@ -161,6 +188,10 @@
             currentFiles = data.files || [];
             DOM.statFiles.textContent = currentFiles.length;
             setStatus('共 ' + currentFiles.length + ' 个文件', 'success');
+            currentSort = { key: 'name', dir: 'asc' };
+            document.querySelectorAll('.sort-th').forEach(function (h) { h.classList.remove('sort-asc', 'sort-desc'); });
+            var nameTh = document.querySelector('.sort-th[data-sort="name"]');
+            if (nameTh) nameTh.classList.add('sort-asc');
             renderFileList(currentFiles);
             DOM.welcomePanel.style.display = 'none';
             DOM.rulePanel.style.display = 'block';
@@ -174,9 +205,26 @@
         });
     }
 
+    function sortFiles(files, key, dir) {
+        var sorted = files.slice();
+        sorted.sort(function (a, b) {
+            var va = a[key], vb = b[key];
+            if (typeof va === 'string') {
+                va = va.toLowerCase(); vb = (vb || '').toLowerCase();
+                return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+            }
+            va = va || 0; vb = vb || 0;
+            return dir === 'asc' ? va - vb : vb - va;
+        });
+        return sorted;
+    }
+
     function renderFileList(files) {
+        var keyword = DOM.searchFilter.value.trim().toLowerCase();
+        var filtered = keyword ? files.filter(function (f) { return f.name.toLowerCase().indexOf(keyword) !== -1; }) : files;
+        var sorted = sortFiles(filtered, currentSort.key, currentSort.dir);
         var html = '';
-        files.forEach(function (f) {
+        sorted.forEach(function (f) {
             html += '<tr>' +
                 '<td><input class="form-check-input file-checkbox" type="checkbox" value="' + escHtml(f.name) + '" data-mtime="' + f.mtime + '"></td>' +
                 '<td>' + escHtml(f.name) + '</td>' +
@@ -186,7 +234,9 @@
                 '</tr>';
         });
         DOM.fileBody.innerHTML = html;
-        DOM.fileCount.textContent = files.length + ' 个文件';
+        var total = currentFiles.length;
+        var shown = sorted.length;
+        DOM.fileCount.textContent = shown < total ? shown + ' / ' + total + ' 个' : total + ' 个';
         DOM.selectAll.checked = false;
         document.querySelectorAll('.file-checkbox').forEach(function (cb) {
             cb.addEventListener('change', updatePreviewBtn);
@@ -242,6 +292,58 @@
     }
 
     function execute() {
+        if (currentMappings.length === 0) return;
+        var changed = 0, conflicts = 0;
+        currentMappings.forEach(function (m) {
+            if (m.changed && !m.conflict) changed++;
+            if (m.conflict) conflicts++;
+        });
+        if (changed === 0) { alert('没有需改动的文件'); return; }
+
+        var dirs = {};
+        currentMappings.forEach(function (m) {
+            if (m.typeDir) dirs[m.typeDir] = true;
+            if (m.timeDir) dirs[m.timeDir] = true;
+        });
+        var dirCount = Object.keys(dirs).length;
+
+        var summaryHtml = '';
+        summaryHtml += '<div class="modal-stat ok"><div class="modal-stat-value">' + changed + '</div><div class="modal-stat-label">待改动</div></div>';
+        if (conflicts > 0) summaryHtml += '<div class="modal-stat warn"><div class="modal-stat-value">' + conflicts + '</div><div class="modal-stat-label">冲突（跳过）</div></div>';
+        if (dirCount > 0) summaryHtml += '<div class="modal-stat"><div class="modal-stat-value">' + dirCount + '</div><div class="modal-stat-label">新建目录</div></div>';
+        summaryHtml += '<div class="modal-stat"><div class="modal-stat-value">' + (DOM.dryRun.checked ? '是' : '否') + '</div><div class="modal-stat-label">Dry-run</div></div>';
+
+        var detailHtml = '';
+        if (changed > 10) {
+            detailHtml += '<p>将处理以下文件（仅显示前 10 项）：</p><ul>';
+            var shown = 0;
+            currentMappings.forEach(function (m) {
+                if (m.changed && !m.conflict && shown < 10) {
+                    detailHtml += '<li>' + escHtml(m.from) + ' → ' + escHtml(m.to) + '</li>';
+                    shown++;
+                }
+            });
+            detailHtml += changed > 10 ? '<li>... 及其他 ' + (changed - 10) + ' 个文件</li>' : '';
+            detailHtml += '</ul>';
+        } else {
+            detailHtml += '<p>将处理以下文件：</p><ul>';
+            currentMappings.forEach(function (m) {
+                if (m.changed && !m.conflict) detailHtml += '<li>' + escHtml(m.from) + ' → ' + escHtml(m.to) + '</li>';
+            });
+            detailHtml += '</ul>';
+        }
+
+        DOM.modalSummary.innerHTML = summaryHtml;
+        DOM.modalDetail.innerHTML = detailHtml;
+        DOM.confirmModal.style.display = 'flex';
+    }
+
+    function hideModal() {
+        DOM.confirmModal.style.display = 'none';
+    }
+
+    function doExecute() {
+        hideModal();
         if (currentMappings.length === 0) return;
 
         if (currentMappings.length > 200) {
@@ -578,4 +680,11 @@
         div.textContent = s;
         return div.innerHTML;
     }
+
+    window.toggleSelectAll = function (el) {
+        var checked = el.checked;
+        var boxes = document.querySelectorAll('.file-checkbox');
+        for (var i = 0; i < boxes.length; i++) boxes[i].checked = checked;
+        updatePreviewBtn();
+    };
 })();

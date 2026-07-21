@@ -129,8 +129,9 @@
     <div class="panel" id="filePanel" style="display:none">
         <div class="panel-header">
             <span>📄 文件列表</span>
-            <div class="panel-actions" style="gap:4px">
-                <input type="text" id="extFilter" placeholder="扩展名筛选" class="input-group-sm" style="width:130px;padding:3px 8px;font-size:12px">
+            <div class="panel-actions" style="gap:4px;flex-wrap:wrap">
+                <input type="text" id="searchFilter" placeholder="搜索文件名..." class="input-group-sm" style="width:140px;padding:3px 8px;font-size:12px">
+                <input type="text" id="extFilter" placeholder="扩展名筛选" class="input-group-sm" style="width:120px;padding:3px 8px;font-size:12px">
                 <button class="btn btn-secondary btn-sm" id="filterBtn">筛选</button>
                 <span class="text-muted" style="font-size:12px;font-weight:400;text-transform:none" id="fileCount"></span>
             </div>
@@ -140,11 +141,11 @@
                 <table>
                     <thead>
                         <tr>
-                            <th style="width:40px"><input type="checkbox" id="selectAll"></th>
-                            <th>文件名称</th>
-                            <th style="width:90px">大小</th>
-                            <th style="width:80px">类型</th>
-                            <th style="width:150px">修改时间</th>
+                            <th style="width:40px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
+                            <th data-sort="name" class="sort-th">文件名称 <span class="sort-arrow"></span></th>
+                            <th data-sort="size" class="sort-th" style="width:90px">大小 <span class="sort-arrow"></span></th>
+                            <th data-sort="ext" class="sort-th" style="width:80px">类型 <span class="sort-arrow"></span></th>
+                            <th data-sort="mtime" class="sort-th" style="width:150px">修改时间 <span class="sort-arrow"></span></th>
                         </tr>
                     </thead>
                     <tbody id="fileBody"></tbody>
@@ -239,6 +240,23 @@
     </div>
 </div>
 
-<script src="/assets/app.js"></script>
+<div class="modal-overlay" id="confirmModal" style="display:none">
+    <div class="modal-box">
+        <div class="modal-header">
+            <span>⚠️ 确认执行</span>
+            <span class="modal-close" id="modalClose">✕</span>
+        </div>
+        <div class="modal-body">
+            <div id="modalSummary" class="modal-summary"></div>
+            <div class="modal-detail" id="modalDetail"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="modalCancel">取消</button>
+            <button class="btn btn-success" id="modalConfirm">确认执行</button>
+        </div>
+    </div>
+</div>
+
 </body>
+<script src="/assets/app.js"></script>
 </html>
