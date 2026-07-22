@@ -1,65 +1,106 @@
 # 文件整理工作台
 
-带 GUI 的本地文件整理工具。选目录 → 可视化配置规则 → 预览 diff → 勾选执行 → 操作日志 → 可回滚。目标是在不改动原文件前让你看清结果。
+带 GUI 的本地文件批量整理工具。**选目录 → 配规则 → 预览确认 → 执行 → 可回滚**，所有操作默认 Dry-run，不改动前让你看清结果。
 
 ## 快速启动
 
 ```powershell
 cd D:\tools\file-workbench
-php -S localhost:9090 -t public
-start http://localhost:9090
+php -S 127.0.0.1:9090 -t public
+start http://127.0.0.1:9090
 ```
+
+**唯一依赖**：PHP 8.0+ CLI（无需额外扩展、无需 Composer、无需数据库）
 
 ---
 
 ## 功能清单
 
-### MVP（第一期）
+### 重命名规则（7 种，可任意组合）
 
-| 模块 | 功能 | 说明 |
+| 规则 | 说明 | 示例 |
 |------|------|------|
-| 目录选择 | 输入路径 + 浏览选择 | 限制在白名单范围内 |
-| 文件列表 | 扫描展示 | 名称/大小/类型/修改时间，支持按扩展名筛选 |
-| 重命名规则 | 可视化勾选 | 去空格、去特殊字符、统一大小写、加日期前缀、序号填充、扩展名小写、字符串查找替换 |
-| 预览 diff | 执行前对照 | 原名 → 新名，冲突标红 |
-| 勾选执行 | 勾选要处理的文件 | 只处理选中项 |
-| Dry-run | 默认开启 | 只看预览不动文件 |
-| 结果展示 | 成功/失败列表 | 失败原因可查看 |
-| 操作日志 | 记录每次改名映射 | 用于追溯和回滚 |
+| 去空格 | 移除文件名中的空格 | `photo 1.jpg` → `photo1.jpg` |
+| 去特殊字符 | 保留中文、字母、数字、横线 | `报告(1).pdf` → `报告1.pdf` |
+| 统一小写 | 字母转为小写 | `Script.js` → `script.js` |
+| 扩展名小写 | 扩展名转为小写 | `Script.JS` → `Script.js` |
+| 加日期前缀 | 按当天日期加前缀 | `readme.txt` → `20260722_readme.txt` |
+| 序号填充 | 按处理顺序编号 | 第 3 个 → `003_readme.txt` |
+| 查找替换 | 替换指定字符串 | `photo` → `img` → `img1.jpg` |
 
-### 第二期
+### 归档功能
+
+| 功能 | 效果 |
+|------|------|
+| 按类型归档 | `photo.jpg` → `images/photo.jpg`（图片/文档/视频/音频/压缩包/代码 6 类） |
+| 按时间归档 | `2026-03.doc` → `2026/03/2026-03.doc`（按修改日期建 YYYY/MM 目录） |
+| 两者可叠加 | `photo.jpg` → `2026/03/images/photo.jpg` |
+
+### 安全体系
+
+| 措施 | 说明 |
+|------|------|
+| Dry-run 默认开启 | 执行前必须手动关闭，只预览不改动 |
+| 系统目录拦截 | `C:\Windows`、`/etc` 等系统路径禁止操作 |
+| 路径不存在校验 | 返回可读错误提示 |
+| 冲突检测 | 目标文件已存在时自动跳过，不覆盖 |
+| 单次处理上限 | 最多 2000 个文件，防止内存溢出 |
+| 确认弹窗 | 执行前显示改动摘要 + 文件清单，确认后才执行 |
+| **回收站机制** | 重复文件删除时移入 `storage/trash/`，保留 7 天可恢复 |
+| 操作日志回滚 | 每次改名记录日志，可一键回滚恢复 |
+
+### 界面功能
 
 | 功能 | 说明 |
 |------|------|
-| 按类型归档 | 图片/文档/视频分到子目录 |
-| 重复文件检测 | 按 hash 找出重复，确认后移入项目回收站；7 天内可恢复 |
-| 时间归档 | 按修改日期建 YYYY/MM 文件夹 |
-| 回滚 | 按操作日志把文件名改回去 |
-| 规则模板 | 保存/加载 JSON 配置 |
-| 大目录异步处理 | 队列 + 进度条 |
+| 文件列表排序 | 点击表头按名称/大小/类型/时间排序，再次点击切换升降序 |
+| 搜索过滤 | 输入关键字实时过滤文件名 |
+| 扩展名筛选 | 扫描时按 `jpg,png,pdf` 过滤文件 |
+| 全选/取消 | 表头复选框控制全部勾选 |
+| 预览 diff | 原名 → 新名对照表，冲突行黄色高亮 |
+| 操作日志 | 底部通栏展示，点击日志行自动填入路径并扫描 |
+| 回收站面板 | 查看已移入回收站的文件，支持一键恢复 |
+
+### 扩展功能
+
+| 功能 | 说明 |
+|------|------|
+| 规则模板 | 保存/加载/删除常用规则组合（JSON 文件） |
+| 重复文件检测 | 按大小 + MD5 哈希查找，勾选后移入回收站 |
+| 大目录进度条 | 执行改名超过 200 文件时显示实时进度百分比 |
+| 头状态栏 | 实时显示当前路径、文件数、重复数 |
 
 ---
 
-## 安全约束
+## API 接口
 
-- 默认开启 **Dry-run**，确认后才执行
-- 路径白名单（如 `D:\Downloads`、`D:\Docs` 等）
-- 禁止处理系统目录（`C:\Windows`、`/etc`）
-- 重名冲突检测：不覆盖，冲突自动添加序号后缀
-- 单次处理上限：2000 个文件
+| 接口 | 方法 | 用途 |
+|------|------|------|
+| `/api/scan` | POST | 扫描目录，返回文件列表 |
+| `/api/preview` | POST | 按规则预览改名映射 |
+| `/api/execute` | POST | 执行改名（支持 Dry-run） |
+| `/api/rollback` | POST | 按日志回滚操作 |
+| `/api/logs` | POST | 获取操作日志列表 |
+| `/api/duplicates` | POST | 检测目录下重复文件 |
+| `/api/duplicates/clean` | POST | 将重复文件移入回收站 |
+| `/api/trash` | POST | 回收站文件列表 |
+| `/api/trash/restore` | POST | 从回收站恢复文件 |
+| `/api/templates` | POST | 规则模板列表 |
+| `/api/template/save` | POST | 保存规则模板 |
+| `/api/template/delete` | POST | 删除规则模板 |
+| `/api/progress` | POST | 查询执行进度 |
 
 ---
 
 ## 技术栈
 
-| 层 | 选型 | 说明 |
-|----|------|------|
-| 运行 | PHP 8.x `php -S localhost:9090 -t public` | 内置服务器，零配置；不要求 mbstring 扩展 |
-| 后端 | 原生 PHP，无框架 | 接口可控、依赖少 |
-| 前端 | HTML + CSS + 原生 JS | 或 + Bootstrap 5 |
-| 通信 | fetch JSON API | 三个接口即可 |
-| 存储 | JSON 日志文件 | 记录 rename 映射 |
-| 依赖 | 零 Composer 依赖 | MVP 全用 `scandir` / `rename` 等内置函数 |
+| 层 | 选型 |
+|----|------|
+| 运行时 | PHP 8.x `php -S` 内置服务器 |
+| 后端 | 原生 PHP，零 Composer/零框架 |
+| 前端 | 纯 HTML + CSS + JS，无第三方 UI 框架 |
+| 存储 | JSON 文件（日志/模板/回收站元数据） |
+| 字体 | Plus Jakarta Sans（显示）、Inter（正文）、JetBrains Mono（代码） |
 
 ---
 
@@ -68,194 +109,38 @@ start http://localhost:9090
 ```
 file-workbench/
 ├── public/
-│   ├── index.php           # 入口，加载页面
-│   ├── assets/
-│   │   ├── app.css         # Bootstrap 样式覆盖
-│   │   └── app.js          # 前端交互逻辑
-│   └── favicon.ico
+│   ├── index.php              # 路由入口
+│   ├── templates/main.html    # 页面骨架
+│   └── assets/
+│       ├── app.css             # 样式（完整设计系统）
+│       └── app.js              # 前端交互逻辑
 ├── src/
-│   ├── Scanner.php         # 扫描目录，返回文件列表
-│   ├── RenameEngine.php    # 规则引擎：应用规则 → 预览映射
-│   ├── Executor.php        # 执行 rename + 写日志
-│   ├── Whitelist.php       # 白名单路径校验
-│   └── Log.php             # 操作日志读写 + 回滚
+│   ├── index.php               # API 调度器
+│   ├── Whitelist.php           # 路径白名单校验
+│   ├── Scanner.php             # 目录扫描
+│   ├── RenameEngine.php        # 重命名规则引擎
+│   ├── Categorizer.php         # 文件类型分类映射
+│   ├── Executor.php            # 执行改名校验
+│   ├── Log.php                 # 操作日志 + 回滚
+│   ├── Progress.php            # 进度追踪
+│   ├── TemplateManager.php     # 规则模板管理
+│   ├── DuplicateFinder.php     # 重复文件检测
+│   └── TrashManager.php        # 回收站管理
 ├── storage/
-│   └── logs/               # 操作日志 JSON
-│   └── trash/              # 重复文件回收站，条目保留 7 天
-├── PLAN.md                 # 开发步骤
-└── README.md               # 本文件
+│   ├── logs/                   # 操作日志 JSON
+│   ├── trash/                  # 回收站（7 天自动清理）
+│   └── templates/              # 规则模板 JSON
+├── .gitignore
+├── README.md
+└── PLAN.md
 ```
 
 ---
 
-## API 接口设计
-
-| 接口 | 方法 | 参数 | 返回 |
-|------|------|------|------|
-| `/api/scan` | POST | `{path, exts: ["jpg","pdf"]}` | `{files: [{name, size, mtime, ext}]}` |
-| `/api/preview` | POST | `{path, files: ["1.jpg"], rules: {...}}` | `{mappings: [{from, to, conflict}]}` |
-| `/api/execute` | POST | `{path, mappings: [{from, to}], dryRun: true}` | `{results: [{from, to, status}]}` |
-| `/api/rollback` | POST | `{logId}` | `{results: [{from, to, status}]}` |
-
-### rules 格式
-
-```json
-{
-    "remove_spaces": true,
-    "remove_special_chars": true,
-    "lowercase": true,
-    "add_date_prefix": true,
-    "date_format": "Ymd",
-    "add_sequence": true,
-    "sequence_padding": 3,
-    "add_suffix": "",
-    "ext_lowercase": true,
-    "find_replace": [
-        {"find": "old", "replace": "new"}
-    ]
-}
-```
-
----
-
-## 核心类说明
-
-### Scanner.php
-
-```php
-class Scanner {
-    public function scan(string $path, array $exts = []): array
-    // 返回: [{name, size, mtime, ext, fullPath}]
-    // 排序: 文件在前按名称排序，目录最后
-}
-```
-
-### RenameEngine.php
-
-```php
-class RenameEngine {
-    public function preview(string $path, array $files, array $rules): array
-    // 返回: [{from, to, conflict}]
-    // conflict: 目标文件名已存在时设为 true
-}
-```
-
-### Executor.php
-
-```php
-class Executor {
-    public function execute(array $mappings, string $path): array
-    // 返回: [{from, to, status: 'ok'|'error', message}]
-    // 执行后写入操作日志
-}
-```
-
-### Log.php
-
-```php
-class Log {
-    public static function write(array $mappings, string $path): string
-    // 返回 logId
-    public static function get(string $logId): ?array
-    public static function rollback(string $logId): array
-    // 回滚：reverse mappings + 标记已回滚
-}
-```
-
-### Whitelist.php
-
-```php
-class Whitelist {
-    public static function check(string $path): bool
-    // 校验路径是否在白名单内且不是系统目录
-    public static function allowedPaths(): array
-    // 返回允许的根目录前缀列表
-}
-```
-
----
-
-## 界面布局
-
-```
-┌──────────────────────────────────────────────────────────┐
-│  🗂 文件整理工作台                    [Dry-run ✓] [执行]   │
-├─────────────────────┬────────────────────────────────────┤
-│ 1. 选择目录          │  3. 文件列表（筛选、勾选）           │
-│  [📁 浏览] D:\docs  │  □ 名称            大小   修改时间   │
-│                      │  ☑ photo 1.jpg   1.2MB  2026-03-27 │
-│ 2. 重命名规则        │  ☑ 报告(1).pdf   800KB  2026-03-26 │
-│ ☐ 去空格            │  □ readme.txt     2KB   2026-03-25 │
-│ ☐ 去特殊字符        │                                      │
-│ ☑ 统一小写          ├──────────────────────────────────────┤
-│ ☑ 加日期前缀        │  4. 预览（原名 → 新名）               │
-│ ☐ 序号填充 [3]位    │  photo 1.jpg → 20260327_photo_1.jpg │
-│ ☐ 扩展名小写        │  "报告(1).pdf" → "报告1.pdf"        │
-│ ☐ 替换 [_____]→[__] │  [✔ 执行成功 23个 / ❌ 失败 0个]    │
-│                      │                                      │
-│                      │  5. 操作日志 / 回滚                  │
-└─────────────────────┴──────────────────────────────────────┘
-```
-
----
-
-## 开发步骤
-
-| 步骤 | 内容 | 产出 |
-|------|------|------|
-| 1 | 搭 `index.php` 路由 + HTML 骨架 | 页面能打开 |
-| 2 | 实现 `src/Whitelist.php` | 路径校验 |
-| 3 | 实现 `src/Scanner.php` + `/api/scan` | 能扫目录出列表 |
-| 4 | 前端文件列表渲染 | 表格显示 + 勾选 |
-| 5 | 实现 `src/RenameEngine.php` + `/api/preview` | 能预览 diff |
-| 6 | 前端 diff 表格 + 冲突标红 | 预览可视化 |
-| 7 | 实现 `src/Executor.php` + `/api/execute` | 能真正改名 |
-| 8 | 实现 Dry-run 模式 | 默认不执行 |
-| 9 | 实现 `src/Log.php` + 操作日志 | 改名可追溯 |
-| 10 | 回滚功能（二期） | 按日志回退 |
-| 11 | P0 测试 + 边界处理 | 可用 |
-
----
-
-## 接口实现骨架
-
-### POST `/api/scan`
-
-```php
-// public/index.php 路由分发
-$path = $_POST['path'];
-if (!Whitelist::check($path)) {
-    exit(json_encode(['error' => '路径不在白名单']));
-}
-$files = (new Scanner())->scan($path, $_POST['exts'] ?? []);
-echo json_encode(['files' => $files]);
-```
-
-### 前端主循环
-
-```js
-// public/assets/app.js
-async function scan() {
-    const files = await fetch('/api/scan', {method:'POST', body: formData}).then(r => r.json());
-    renderFileList(files);
-}
-async function preview() {
-    const mappings = await fetch('/api/preview', {method:'POST', body: formData}).then(r => r.json());
-    renderDiff(mappings);
-}
-async function execute() {
-    const result = await fetch('/api/execute', {method:'POST', body: formData}).then(r => r.json());
-    showResult(result);
-}
-```
-
----
-
-## 部署方式
+## 启动方式
 
 ```powershell
-cd D:\tools\file-workbench
-php -S localhost:9090 -t public
+php -S 127.0.0.1:9090 -t public
 ```
 
-浏览器打开 `http://localhost:9090`。
+浏览器打开 `http://127.0.0.1:9090`。
